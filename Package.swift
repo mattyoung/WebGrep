@@ -11,6 +11,7 @@ let package = Package(
         .package(url: "https://github.com/scinfu/SwiftSoup.git", .upToNextMajor(from: "2.6.1")),
         .package(url: "https://github.com/onevcat/Rainbow", .upToNextMajor(from: "4.0.1")),
 //        .package(url: "https://github.com/pakLebah/ANSITerminal.git", .upToNextMajor(from: "0.0.3")),
+//        .package(url: "https://github.com/dominicegginton/Spinner", from: "1.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -22,6 +23,7 @@ let package = Package(
                 .product(name: "SwiftSoup", package: "SwiftSoup"),
                 .product(name: "Rainbow", package: "Rainbow"),
 //                .product(name: "ANSITerminal", package: "ANSITerminal")
+//                .product(name: "Spinner", package: "Spinner"),
             ]
         ),
     ]

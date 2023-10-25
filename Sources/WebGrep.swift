@@ -9,6 +9,8 @@ import SwiftSoup
 //import ANSITerminal   // https://github.com/pakLebah/ANSITerminal
 import Rainbow          // https://github.com/onevcat/Rainbow.git
 import OSLog
+//import Spinner
+
 
 extension Logger {
   private static var subsystem = "WebGrep"
@@ -38,6 +40,7 @@ enum OSType: String, ExpressibleByArgument {
 @main
 struct WebGrepApp: ParsableCommand {
   static var configuration = CommandConfiguration(
+    commandName: "webgrep",
     abstract: "A utility for extracting stuff from the web.",
     subcommands: [AppleSystemFonts.self],
     defaultSubcommand: AppleSystemFonts.self
