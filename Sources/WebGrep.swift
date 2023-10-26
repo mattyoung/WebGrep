@@ -4,12 +4,12 @@
 // Swift Argument Parser
 // https://swiftpackageindex.com/apple/swift-argument-parser/documentation
 
+import OSLog
 import ArgumentParser
 import SwiftSoup
 //import ANSITerminal   // https://github.com/pakLebah/ANSITerminal
 import Rainbow          // https://github.com/onevcat/Rainbow.git
-import OSLog
-//import Spinner
+import Spinner
 
 
 extension Logger {
@@ -73,32 +73,47 @@ extension WebGrepApp {
     @Argument(help: "Enter either ios or macos")
     var ostype: OSType
 
+    @Option(name: .shortAndLong, help: "Enter a output file name, default is \"font(ostype).txt\".")
+    var output: String? = nil
+
     mutating func run() throws {
-      // just hardcode this and force unwrap, will crash if this is wrong
-      if options.verbose {
-        print("Visiting \(Self.urlString)".onCyan)
-      }
+      // just hardcode and force unwrap, will crash if this is wrong
       let url = URL(string: Self.urlString)!
 
-      if options.verbose {
-        print("Parse...".onCyan)
-      }
-      let doc = try SwiftSoup.parse(try String(contentsOf: url))
+      let spinner = Spinner([.dots, .dots8Bit].randomElement()!, "Downloading...", color: .cyan)
 
       if options.verbose {
-        print("Processing...".onCyan)
+        spinner.start()
       }
 
-      // find all fonts, each is inside css class "font-item"
-      let fontNames = try doc.getElementsByClass("font-item")
-        .filter { try isBuiltIn($0, contains: ostype.rawValue) }
-        .map { try $0.getElementsByClass("filter-font-name").text() }
+      do {
+        let doc = try SwiftSoup.parse(try String(contentsOf: url))
+        // find all fonts, each is inside css class "font-item"
+        if options.verbose {
+          spinner.updateText("Processing the DOM")
+        }
+        let fontNames = try doc.getElementsByClass("font-item")
+          .filter { try isBuiltIn($0, contains: ostype.rawValue) }
+          .map { try $0.getElementsByClass("filter-font-name").text() }
 
-      codeGen(fontNames)
+        let codeString = codeGen(fontNames)
+        if let output {
+          if options.verbose {
+            spinner.updateText("Saving result to \(output)")
+          }
+          try codeString.write(toFile: output, atomically: true, encoding: .utf8)
+        } else {
+          print(codeString)
+        }
 
-      Logger.debug.info("Done: \(Date.now)")
-      if options.verbose {
-        print("Done: \(Date.now)".onCyan)
+        if options.verbose {
+          spinner.succeed("Done \(Date.now)")
+        }
+      } catch {
+        if options.verbose {
+          spinner.failure("Something went wrong: \(error).")
+        }
+        throw error
       }
     }
 
@@ -112,14 +127,17 @@ extension WebGrepApp {
       return try row.getElementsByClass("font-platform").text().contains(key)
     }
 
-    func codeGen(_ fontNames: [String]) {
-      print("// Generated: For \(ostype.rawValue) on \(Date.now), \(fontNames.count) fonts")
-      print("// Extracted from \(Self.urlString)")
+    func codeGen(_ fontNames: [String]) -> String {
+      var result = String()
+      result.append("// Generated: For \(ostype.rawValue) on \(Date.now), \(fontNames.count) fonts\n")
+      result.append("// Extracted from \(Self.urlString)\n")
       for name in fontNames {
-        print("case \(name.asIdentifier.lowercasedFirstLetter()) = \"\(name)\"")
+        result.append("case \(name.asIdentifier.lowercasedFirstLetter()) = \"\(name)\"\n")
       }
-      print("// Generated: For \(ostype.rawValue) on \(Date.now), \(fontNames.count) fonts")
-      print("// Extracted from \(Self.urlString)")
+      result.append("// Generated: For \(ostype.rawValue) on \(Date.now), \(fontNames.count) fonts\n")
+      result.append("// Extracted from \(Self.urlString)\n")
+
+      return result
     }
   }
 }
