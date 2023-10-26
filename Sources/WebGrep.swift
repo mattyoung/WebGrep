@@ -90,7 +90,7 @@ extension WebGrepApp {
         let doc = try SwiftSoup.parse(try String(contentsOf: url))
         // find all fonts, each is inside css class "font-item"
         if options.verbose {
-          spinner.updateText("Processing the DOM")
+          spinner.message("Processing the DOM")
         }
         let fontNames = try doc.getElementsByClass("font-item")
           .filter { try isBuiltIn($0, contains: ostype.rawValue) }
@@ -99,7 +99,7 @@ extension WebGrepApp {
         let codeString = codeGen(fontNames)
         if let output {
           if options.verbose {
-            spinner.updateText("Saving result to \(output)")
+            spinner.message("Saving result to \(output)")
           }
           try codeString.write(toFile: output, atomically: true, encoding: .utf8)
         } else {
@@ -107,11 +107,11 @@ extension WebGrepApp {
         }
 
         if options.verbose {
-          spinner.succeed("Done \(Date.now)")
+          spinner.success("Done \(Date.now)")
         }
       } catch {
         if options.verbose {
-          spinner.failure("Something went wrong: \(error).")
+          spinner.error("Something went wrong: \(error).")
         }
         throw error
       }
